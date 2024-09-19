@@ -9,6 +9,7 @@ on:
 jobs:
   Build:
     runs-on: windows-latest
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
@@ -25,6 +26,16 @@ jobs:
       - name: Install Toolchain
         run: rustup target add wasm32-wasi
 
+      # add Rust cache
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            zed/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Clone Source Code
         run: |
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -34,7 +45,7 @@ jobs:
       - name: Build Executable
         run: |
           cd zed
-          cargo build --release
+          cargo build --release --verbose
 
       - name: Compile Setup Wizard
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
@@ -42,35 +53,17 @@ jobs:
           path: zed_wizard.iss
           options: /O+
 
-      - name: Upload Setup Wizard
-        uses: actions/upload-artifact@v4
-        with:
-          name: setup
-          path: Output\zed_setup.exe
-
-  Upload:
-    needs: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-
-      - name: Download Release Folder
-        uses: actions/download-artifact@v4
-        with:
-          name: setup
-          path: Output
-
-      - name: Setup Git Environment
+      - name: Rename Setup Wizard
         run: |
-          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git config --global user.name github-actions[bot]
+          $date = Get-Date -Format "yyyy-MM-dd"
+          Rename-Item -Path "Output\zed_setup.exe" -NewName "zed-setup-nightly-$date.exe"
 
       - name: Generate Release Tag
         id: tag
         run: |
-          echo "::set-output name=release_tag::$(date +"%Y.%m.%d")"
-          echo "::set-output name=release_date::$(date +"%Y.%m.%d")"
+          $date = Get-Date -Format "yyyy-MM-dd"
+          echo "release_tag=$date" >> $env:GITHUB_OUTPUT
+          echo "release_date=$date" >> $env:GITHUB_OUTPUT
 
       - name: Upload to Releases
         uses: softprops/action-gh-release@v2
@@ -79,4 +72,4 @@ jobs:
         with:
           name: ${{ steps.tag.outputs.release_date }} Zed Windows
           tag_name: ${{ steps.tag.outputs.release_tag }}
-          files: Output/zed_setup.exe
+          files: Output/zed-setup-nightly-${{ steps.tag.outputs.release_date }}.exe
