@@ -13,15 +13,6 @@ I don't understand why Zed Industries dosen't release it's own Windows binary. T
 
 It is unclear why Zed Industries doesn't release its own Windows binary. While compiling the code is not complicated, it can be a significant challenge for beginners and it takes up a significant amount of time.
 
-
-
 ## Download
 
 Go to [Releases](https://github.com/TakumiBC/zed-windows/releases) and download the latest version of `zed_setup.exe`. Run `zed_setup.exe` on your Windows computer and follow the instructions from the setup wizard. Afterwards, you should be able to run Zed.
-
-
-
-
-
-
-
